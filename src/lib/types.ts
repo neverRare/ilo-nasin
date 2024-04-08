@@ -1,19 +1,6 @@
 // please stay in sync 🥺 these are manually added
 
-export type TokenType =
-	| 'particle'
-	| 'content'
-	| 'preposition'
-	| 'preverb'
-	| 'number'
-	| 'modifierOnly'
-	| 'unmarkedSubject';
-
-export type Token = {
-	type: TokenType;
-	value: string;
-	index: number;
-};
+import type { Token } from './lex';
 
 export type Phrase = {
 	type: 'phrase';
@@ -29,34 +16,65 @@ export type Modifiers = {
 };
 
 export type NanpaPhrase = {
-	type: 'nanpa';
+	type: 'nanpa_phrase';
+	nanpa: Token;
 	numbers: Token[];
 };
 
 export type PiPhrase = {
-	type: 'pi';
+	type: 'pi_phrase';
+	pi: Token;
 	head: Token;
 	modifiers: Modifiers;
 };
 
-export type Predicate = {
+export type TransitivePredicate = {
+	type: 'predicate';
+	kind: 'transitive';
+	marker?: Token;
 	preverbs: Preverb[];
 	verb: Phrase;
 	objects: Object[];
 };
 
+export type IntransitivePredicate = {
+	type: 'predicate';
+	kind: 'intransitive';
+	marker?: Token;
+	preverbs: Preverb[];
+	verb: Phrase;
+	prepositions: PrepositionPhrase[];
+};
+
+export type PrepositionPredicate = {
+	type: 'predicate';
+	kind: 'preposition';
+	marker?: Token;
+	preverbs: Preverb[];
+	verb: PrepositionPhrase;
+	prepositions: PrepositionPhrase[];
+};
+
+export type Predicate =
+	| TransitivePredicate
+	| IntransitivePredicate
+	| PrepositionPredicate;
+
 export type Preverb = {
 	type: 'preverb';
 	preverb: Token;
-	negated: boolean;
+	negated: Token | null;
 };
 
 export type Object = {
+	type: 'object';
+	e: Token;
 	object: Phrase;
 	prepositions: PrepositionPhrase[];
 };
 
 export type PrepositionPhrase = {
+	type: 'preposition_phrase';
 	preposition: Preposition;
 	phrase: Phrase;
 };
@@ -64,51 +82,88 @@ export type PrepositionPhrase = {
 export type Preposition = {
 	type: 'preposition';
 	preposition: Token;
-	negated: boolean;
+	negated: Token | null;
+};
+
+export type Subject = {
+	type: 'subject';
+	en?: Token;
+	phrase: Phrase;
 };
 
 export type UnmarkedSubjectClause = {
-	subjects: Phrase[];
+	type: 'clause';
+	kind: 'unmarked_subject';
+	subjects: Subject[];
 	predicates: Predicate[];
 };
 
 export type MarkedSubjectClause = {
-	subjects: Phrase[];
+	type: 'clause';
+	kind: 'marked_subject';
+	subjects: Subject[];
 	predicates: Predicate[];
 };
 
 export type DeonticClause = {
-	subjects: Phrase[];
+	type: 'clause';
+	kind: 'deontic';
+	subjects?: Subject[];
 	predicates: Predicate[];
 	deontic: true;
 };
 
+export type ContextConjunction = {
+	type: 'context';
+	kind: 'conjunction';
+	kin: Token;
+	la?: Token;
+};
+
+export type ContextPreposition = {
+	type: 'context';
+	kind: 'preposition';
+	phrases: PrepositionPhrase[];
+	la: Token;
+};
+
+export type ContextPhrase = {
+	type: 'context';
+	kind: 'phrase';
+	phrase: Phrase;
+	la: Token;
+};
+
+export type ContextClause = {
+	type: 'context';
+	kind: 'clause';
+	clause: Clause;
+	la: Token;
+};
+
 export type Context =
-	| {
-			type: 'context';
-			kind: 'conjunction';
-			conjunction: Token;
-	  }
-	| {
-			type: 'context';
-			kind: 'phrase';
-			phrase: Phrase;
-	  }
-	| {
-			type: 'context';
-			kind: 'clause';
-			clause: Clause;
-	  };
+	| ContextConjunction
+	| ContextPreposition
+	| ContextPhrase
+	| ContextClause;
 
 export type Clause =
 	| UnmarkedSubjectClause
 	| MarkedSubjectClause
 	| DeonticClause;
 
+export type QuestionTag = {
+	type: 'question_tag';
+	tokens: [Token, Token];
+};
+
 export type Sentence = {
+	type: 'sentence';
 	conjunction?: Token;
 	contexts: Context[];
 	clause: Clause;
+	questionTag?: QuestionTag;
+	emphasis?: Token;
 };
 
 export type Interjection = {
@@ -119,4 +174,26 @@ export type Interjection = {
 export type Vocative = {
 	type: 'vocative';
 	phrase: Phrase;
+	o: Token;
 };
+
+export type Result = Sentence | Interjection | Vocative;
+
+export type Node =
+	| Token
+	| Phrase
+	| Modifiers
+	| NanpaPhrase
+	| PiPhrase
+	| Predicate
+	| Preverb
+	| Object
+	| PrepositionPhrase
+	| Preposition
+	| Subject
+	| Context
+	| Clause
+	| QuestionTag
+	| Sentence
+	| Interjection
+	| Vocative;

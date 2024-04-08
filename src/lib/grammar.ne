@@ -7,7 +7,7 @@ const lexer = new TokiPonaLexer();
 
 function idModifiers([modifierWords, nanpaPhrases, piPhrases]: any[]): any {
 	return {
-		type: "phrase",
+		type: "modifiers",
 		modifierWords: modifierWords || [],
 		nanpaPhrases: nanpaPhrases || [],
 		piPhrases: piPhrases || []
@@ -24,61 +24,91 @@ main -> Sentence {% id %}
 Interjection -> Phrase
 	{% ([phrase]) => ({ type: "interjection", phrase }) %}
 Vocative -> Phrase "o"
-	{% ([phrase]) => ({ type: "vocative", phrase }) %}
+	{% ([phrase, o]) => ({ type: "vocative", phrase, o}) %}
 
-Sentence -> "taso":? Context:* Clause
-	{% ([conjunction, contexts, clause]) => ({ conjunction, contexts, clause }) %}
+Sentence -> "taso":? Context:* Clause QuestionTag:? "a":?
+	{% ([conjunction, contexts, clause, questionTag, emphasis]) => ({ type: "sentence", conjunction, contexts, clause, questionTag, emphasis }) %}
 
-Context -> "kin" "la":? {% ([conjunction]) => ({ type: "context", kind: "conjunction", conjunction }) %}
-	| PrepositionPhrase "la" {% ([prepositionPhrase]) => ({ type: "context", kind: "preposition", prepositionPhrase }) %}
-	| Phrase "la" {% ([phrase]) => ({ type: "context", kind: "phrase", phrase }) %}
-	| Clause "la" {% ([clause]) => ({ type: "context", kind: "clause", clause }) %}
+Context -> ContextConjunction {% id %}
+	| ContextPreposition {% id %}
+	| ContextPhrase {% id %}
+	| ContextClause {% id %}
+
+ContextConjunction -> "kin" "la":?
+	{% ([kin, la]) => ({ type: "context", kind: "conjunction", kin, la }) %}
+
+ContextPreposition -> PrepositionPhrase:+ "la"
+	{% ([phrases, la]) => ({ type: "context", kind: "preposition", phrases, la }) %}
+
+ContextPhrase -> Phrase "la"
+	{% ([phrase, la]) => ({ type: "context", kind: "phrase", phrase, la }) %}
+
+ContextClause -> Clause "la"
+	{% ([clause, la]) => ({ type: "context", kind: "clause", clause, la }) %}
 
 Clause -> UnmarkedSubjectClause {% id %}
 	| MarkedSubjectClause {% id %}
 	| DeonticClause {% id %}
 
+QuestionTag -> "anu" "seme" {% tokens => ({ type: "question_tag", tokens }) %}
+
 
 UnmarkedSubjectClause -> UnmarkedSubject Predicates
-	{% ([subject, predicates]) => ({ subjects: [{ type: "phrase", head: subject }], predicates }) %}
+	{% ([subject, predicates]) => ({ type: "clause", kind: "unmarked_subject", subjects: [{ type: "subject", phrase: subject }], predicates }) %}
 
 MarkedSubjectClause -> MarkedSubject "li" Predicates
-	{% ([subjects, _, predicates]) => ({ subjects, predicates }) %}
+	{% ([subjects, li, predicates]) => ({
+		type: "clause",
+		kind: "marked_subject",
+		subjects,
+		predicates: [{ marker: li, ...predicates[0] }, ...predicates.slice(1)]
+	}) %}
 
-DeonticClause -> DeonticSubject DeonticPredicates
-	{% ([subject, predicates]) => ({ subjects: [subject], predicates, deontic: true }) %}
+DeonticClause -> DeonticSubject:? DeonticPredicates
+	{% ([subjects, predicates]) => ({ type: "clause", kind: "deontic", subjects, predicates, deontic: true }) %}
 
 
-UnmarkedSubject -> "mi" {% id %}
-	| "sina" {% id %}
+UnmarkedSubject -> %unmarkedSubject
+	{% ([head]) => ({ type: "phrase", head }) %}
 
-MarkedSubject -> MarkedSubjectHead {% ([head]) => [{ type: "phrase", head }] %}
-	| Head ModifiersOneRequired {% ([head, modifiers]) => [{ type: "phrase", head, modifiers }] %}
-	| Phrase ( "en" Phrase {% ([_, subject]) => subject %} ):+ {% ([subject, subjects]) => [subject, ...subjects] %}
+MarkedSubject -> MarkedSubjectHead {% ([head]) => [{ type: "subject", phrase: { type: "phrase", head } }] %}
+	| Head ModifiersOneRequired {% ([head, modifiers]) => [{ type: "subject", phrase: { type: "phrase", head, modifiers } }] %}
+	| Phrase ( "en" Phrase {% ([en, subject]) => ({ type: "subject", en, phrase: subject }) %} ):+
+	{% ([subject, subjects]) => [{ type: "subject", phrase: subject }, ...subjects] %}
 
-DeonticSubject -> UnmarkedSubject {% ([subject]) => ({ type: "phrase", head: subject }) %}
+DeonticSubject -> UnmarkedSubject {% ([subject]) => [{ type: "subject", phrase: subject }] %}
 	| MarkedSubject {% id %}
 
 
-Predicates -> Predicate ( "li" Predicate {% ([_, predicate]) => predicate %} ):*
+Predicates -> Predicate ( "li" Predicate {% ([li, predicate]) => ({ marker: li, ...predicate }) %} ):*
 	{% ([predicate, predicates]) => [predicate, ...predicates] %}
 
-DeonticPredicates -> ("o" Predicate {% ([_, predicate]) => predicate %} ):+
+DeonticPredicates -> ("o" Predicate {% ([o, predicate]) => ({ marker: o, ...predicate }) %} ):+
 	{% id %}
 
-Predicate -> Preverb:* Phrase Object:*
-	{% ([preverbs, verb, objects]) => ({ preverbs, verb, objects }) %}
+Predicate -> TransitivePredicate {% id %}
+	| IntransitivePredicate {% id %}
+	| PrepositionPredicate {% id %}
+
+TransitivePredicate -> Preverb:* Phrase Object:+
+	{% ([preverbs, verb, objects]) => ({ type: "predicate", kind: "transitive", preverbs, verb, objects }) %}
+
+IntransitivePredicate -> Preverb:* Phrase PrepositionPhrase:*
+	{% ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "intransitive", preverbs, verb, prepositions }) %}
+
+PrepositionPredicate -> Preverb:* PrepositionPhrase PrepositionPhrase:*
+	{% ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "preposition", preverbs, verb, prepositions }) %}
 
 Preverb -> %preverb "ala":?
 	{% ([preverb, negated]) => ({ type: "preverb", preverb, negated }) %}
 
 
 Object -> "e" Phrase PrepositionPhrase:*
-	{% ([_, object, prepositions]) => ({ object, prepositions }) %}
+	{% ([e, object, prepositions]) => ({ type: "object", e, object, prepositions }) %}
 
 
 PrepositionPhrase -> Preposition Phrase
-	{% ([preposition, phrase]) => ({ preposition, phrase }) %}
+	{% ([preposition, phrase]) => ({ type: "preposition_phrase", preposition, phrase }) %}
 
 Preposition -> %preposition "ala":?
 	{% ([preposition, negated]) => ({ type: "preposition", preposition, negated }) %}
@@ -94,10 +124,9 @@ ModifiersOneRequired -> ModifierWord:+ NanpaPhrase:* PiPhrase:* {% idModifiers %
 	| null null PiPhrase:+ {% idModifiers %}
 
 NanpaPhrase -> "nanpa" %number:+
-	{% ([_, numbers]) => ({ type: "nanpa", numbers }) %}
+	{% ([nanpa, numbers]) => ({ type: "nanpa_phrase", nanpa, numbers }) %}
 PiPhrase -> "pi" Head ModifiersOneRequired
-	{% ([_, head, modifiers]) => ({ type: "pi", head, modifiers }) %}
-
+	{% ([pi, head, modifiers]) => ({ type: "pi_phrase", pi, head, modifiers }) %}
 
 Head -> %content {% id %}
 	| %preposition {% id %}

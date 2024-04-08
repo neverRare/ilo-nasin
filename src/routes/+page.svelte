@@ -1,9 +1,13 @@
 <script lang="ts">
-	import grammar from '$lib/grammar';
 	import nearley from 'nearley';
 
+	import grammar from '$lib/grammar';
+	import type { Result } from '$lib/types';
+	import Render from './Render.svelte';
+
 	let text = 'soweli pona wawa';
-	let results: any;
+	let results: Result[];
+	let error: Error | null = null;
 
 	$: if (text) {
 		const parser = new nearley.Parser(
@@ -13,14 +17,16 @@
 		try {
 			parser.feed(text);
 			results = parser.results;
+			error = null;
 		} catch (e) {
 			console.error(e);
-			results = e;
+			results = [];
+			error = e as Error;
 		}
 	}
 </script>
 
-<div class="max-w-screen-lg px-8 mx-auto">
+<div class="px-8">
 	<h1 class="text-3xl font-bold mt-20">ilo nasin</h1>
 
 	<input
@@ -33,8 +39,8 @@
 	<p class="mt-4">
 		{#if !text}
 			Enter some text to parse!
-		{:else if results instanceof Error}
-			{results.message}
+		{:else if error}
+			<pre class="whitespace-pre-wrap">{error.message}</pre>
 		{:else if !results.length}
 			Unexpected end of input.
 		{:else if results.length === 1}
@@ -44,9 +50,12 @@
 		{/if}
 	</p>
 
-	<pre class="mt-4 whitespace-pre-wrap">{JSON.stringify(
-			results,
-			null,
-			2
-		)}</pre>
+	{#each results as result, i}
+		<div class="mt-4 mb-20">
+			{#if results.length > 1}
+				<h2 class="text-xl font-bold">Parse {i + 1}</h2>
+			{/if}
+			<Render node={result} />
+		</div>
+	{/each}
 </div>
