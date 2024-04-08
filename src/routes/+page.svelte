@@ -5,8 +5,10 @@
 	import type { Node, Result } from '$lib/types';
 	import Render from './Render.svelte';
 
-	let text = 'soweli pona wawa';
-	let results: Result[];
+	type ScoredResult = { result: Result; score: number };
+
+	let text = 'sina ken ala toki pona e ijo la, sina sona ala e ijo.';
+	let results: ScoredResult[];
 	let error: Error | null = null;
 
 	$: if (text) {
@@ -34,7 +36,9 @@
 		'sentence'
 	];
 
-	function scoreNode(node: Node, score = 0): number {
+	function scoreNode(node: Node): number {
+		let score = 0;
+
 		if (node.type === 'token') {
 			return score;
 		}
@@ -44,21 +48,46 @@
 			.flat()
 			.filter(value => value && 'type' in value);
 
+		console.log(children);
+
 		if (goodNodes.includes(node.type)) {
 			score += 1;
 		}
 
-		return children.reduce((acc, child) => scoreNode(child, acc), score);
+		// 'ala' and 'taso' and 'kepeken' are rare as heads
+		if (
+			node.type === 'phrase' &&
+			!('index' in node) &&
+			(node.head.value === 'ala' ||
+				node.head.value === 'taso' ||
+				node.head.value === 'kepeken')
+		) {
+			score -= 2;
+		}
+
+		for (const child of children) {
+			score += scoreNode(child);
+		}
+
+		return score;
 	}
 
-	function sortResults(results: Result[]): Result[] {
-		return results
+	function sortResults(results: Result[]): ScoredResult[] {
+		const scoredResults = results
 			.map(result => ({
 				score: scoreNode(result),
 				result
 			}))
-			.sort((a, b) => b.score - a.score)
-			.map(({ result }) => result);
+			.sort((a, b) => b.score - a.score);
+
+		const exps = scoredResults.map(sr => Math.exp(sr.score));
+		const sum = exps.reduce((a, b) => a + b, 0);
+
+		for (let i = 0; i < scoredResults.length; i++) {
+			scoredResults[i].score = exps[i] / sum;
+		}
+
+		return scoredResults;
 	}
 </script>
 
@@ -89,9 +118,14 @@
 	{#each results as result, i}
 		<div class="mt-4 mb-20">
 			{#if results.length > 1}
-				<h2 class="text-xl font-bold">Parse {i + 1}</h2>
+				<h2 class="text-xl font-bold">
+					Parse {i + 1}
+					<span class="text-sm text-gray-500 font-normal">
+						({(result.score * 100).toFixed(2)}%)
+					</span>
+				</h2>
 			{/if}
-			<Render node={result} />
+			<Render node={result.result} />
 		</div>
 	{/each}
 </div>
