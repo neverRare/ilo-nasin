@@ -2,7 +2,7 @@
 	import nearley from 'nearley';
 
 	import grammar from '$lib/grammar';
-	import type { Result } from '$lib/types';
+	import type { Node, Result } from '$lib/types';
 	import Render from './Render.svelte';
 
 	let text = 'soweli pona wawa';
@@ -16,13 +16,49 @@
 
 		try {
 			parser.feed(text);
-			results = parser.results;
+			results = sortResults(parser.results);
 			error = null;
 		} catch (e) {
 			console.error(e);
 			results = [];
 			error = e as Error;
 		}
+	}
+
+	const goodNodes: Node['type'][] = [
+		'nanpa_phrase',
+		'pi_phrase',
+		'preverb',
+		'preposition_phrase',
+		'clause',
+		'sentence'
+	];
+
+	function scoreNode(node: Node, score = 0): number {
+		if (node.type === 'token') {
+			return score;
+		}
+
+		const children = Object.values(node)
+			.filter(value => value && typeof value === 'object')
+			.flat()
+			.filter(value => value && 'type' in value);
+
+		if (goodNodes.includes(node.type)) {
+			score += 1;
+		}
+
+		return children.reduce((acc, child) => scoreNode(child, acc), score);
+	}
+
+	function sortResults(results: Result[]): Result[] {
+		return results
+			.map(result => ({
+				score: scoreNode(result),
+				result
+			}))
+			.sort((a, b) => b.score - a.score)
+			.map(({ result }) => result);
 	}
 </script>
 
