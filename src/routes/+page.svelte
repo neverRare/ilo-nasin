@@ -11,6 +11,8 @@
 	let results: ScoredResult[];
 	let error: Error | null = null;
 
+	let limited = true;
+
 	$: if (text) {
 		const parser = new nearley.Parser(
 			nearley.Grammar.fromCompiled(grammar)
@@ -47,8 +49,6 @@
 			.flat()
 			.filter(value => value && 'type' in value);
 
-		console.log(children);
-
 		if (goodNodes.includes(node.type)) {
 			score += 1;
 		}
@@ -61,6 +61,8 @@
 				node.head.value === 'kepeken')
 		) {
 			score -= 2;
+		} else if (node.type === 'number') {
+			score += node.words.length / 2;
 		}
 
 		for (const child of children) {
@@ -89,7 +91,7 @@
 	}
 </script>
 
-<div class="px-8">
+<div class="px-8 mb-20">
 	<h1 class="text-3xl font-bold mt-20">ilo nasin</h1>
 
 	<input
@@ -113,7 +115,7 @@
 		{/if}
 	</p>
 
-	{#each results as result, i}
+	{#each limited ? results.slice(0, 5) : results as result, i}
 		<div class="mt-4 mb-20">
 			{#if results.length > 1}
 				<h2 class="text-xl font-bold">
@@ -126,4 +128,18 @@
 			<Render node={result.result} />
 		</div>
 	{/each}
+
+	{#if results.length > 5}
+		<button
+			class="text-blue-500 font-semibold border-b-2 border-transparent hv:border-blue-500 transition mt-4"
+			on:click={() => (limited = !limited)}
+		>
+			<!-- {limited ? 'Show all' : 'Show less'} -->
+			{#if limited}
+				Show {results.length - 5} more
+			{:else}
+				Show less
+			{/if}
+		</button>
+	{/if}
 </div>

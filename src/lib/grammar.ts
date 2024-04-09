@@ -3,21 +3,40 @@
 // Bypasses TS6133. Allow declared but unused functions.
 // @ts-ignore
 function id(d: any[]): any { return d[0]; }
-declare var unmarkedSubject: any;
-declare var preverb: any;
-declare var preposition: any;
-declare var number: any;
-declare var content: any;
-declare var modifierOnly: any;
+declare var word_unmarked_subject: any;
+declare var word_preverb: any;
+declare var word_preposition: any;
+declare var word_number: any;
+declare var word_content: any;
+declare var word_modifier_only: any;
 
 import { TokiPonaLexer } from "./lex";
 
 const lexer = new TokiPonaLexer();
 
-function idModifiers([modifierWords, nanpaPhrases, piPhrases]: any[]): any {
+function idModifiers(args: any[]): any {
+	// console.log(simple, number, nanpaPhrases, piPhrases);
+	let simple: any;
+	let number: any = null;
+	let nanpaPhrases: any;
+	let piPhrases: any;
+
+	if (args.length === 1) {
+		[piPhrases] = args;
+	} else if (args.length === 2) {
+		[nanpaPhrases, piPhrases] = args;
+	} else if (args.length === 3) {
+		[number, nanpaPhrases, piPhrases] = args;
+	} else if (args.length === 4) {
+		[simple, number, nanpaPhrases, piPhrases] = args;
+	} else {
+		throw new Error("Invalid number of arguments");
+	}
+
 	return {
 		type: "modifiers",
-		modifierWords: modifierWords || [],
+		simple: simple || [],
+		number,
 		nanpaPhrases: nanpaPhrases || [],
 		piPhrases: piPhrases || []
 	};
@@ -93,7 +112,7 @@ const grammar: Grammar = {
     {"name": "DeonticClause$ebnf$1", "symbols": ["DeonticSubject"], "postprocess": id},
     {"name": "DeonticClause$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "DeonticClause", "symbols": ["DeonticClause$ebnf$1", "DeonticPredicates"], "postprocess": ([subjects, predicates]) => ({ type: "clause", kind: "deontic", subjects, predicates, deontic: true })},
-    {"name": "UnmarkedSubject", "symbols": [(lexer.has("unmarkedSubject") ? {type: "unmarkedSubject"} : unmarkedSubject)], "postprocess": ([head]) => ({ type: "phrase", head })},
+    {"name": "UnmarkedSubject", "symbols": [(lexer.has("word_unmarked_subject") ? {type: "word_unmarked_subject"} : word_unmarked_subject)], "postprocess": ([head]) => ({ type: "phrase", head })},
     {"name": "MarkedSubject", "symbols": ["MarkedSubjectHead"], "postprocess": ([head]) => [{ type: "subject", phrase: { type: "phrase", head } }]},
     {"name": "MarkedSubject", "symbols": ["Head", "ModifiersOneRequired"], "postprocess": ([head, modifiers]) => [{ type: "subject", phrase: { type: "phrase", head, modifiers } }]},
     {"name": "MarkedSubject$ebnf$1$subexpression$1", "symbols": [{"literal":"en"}, "Phrase"], "postprocess": ([en, subject]) => ({ type: "subject", en, phrase: subject })},
@@ -132,52 +151,62 @@ const grammar: Grammar = {
     {"name": "PrepositionPredicate", "symbols": ["PrepositionPredicate$ebnf$1", "PrepositionPhrase", "PrepositionPredicate$ebnf$2"], "postprocess": ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "preposition", preverbs, verb, prepositions })},
     {"name": "Preverb$ebnf$1", "symbols": [{"literal":"ala"}], "postprocess": id},
     {"name": "Preverb$ebnf$1", "symbols": [], "postprocess": () => null},
-    {"name": "Preverb", "symbols": [(lexer.has("preverb") ? {type: "preverb"} : preverb), "Preverb$ebnf$1"], "postprocess": ([preverb, negated]) => ({ type: "preverb", preverb, negated })},
+    {"name": "Preverb", "symbols": [(lexer.has("word_preverb") ? {type: "word_preverb"} : word_preverb), "Preverb$ebnf$1"], "postprocess": ([preverb, negated]) => ({ type: "preverb", preverb, negated })},
     {"name": "Object$ebnf$1", "symbols": []},
     {"name": "Object$ebnf$1", "symbols": ["Object$ebnf$1", "PrepositionPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "Object", "symbols": [{"literal":"e"}, "Phrase", "Object$ebnf$1"], "postprocess": ([e, object, prepositions]) => ({ type: "object", e, object, prepositions })},
     {"name": "PrepositionPhrase", "symbols": ["Preposition", "Phrase"], "postprocess": ([preposition, phrase]) => ({ type: "preposition_phrase", preposition, phrase })},
     {"name": "Preposition$ebnf$1", "symbols": [{"literal":"ala"}], "postprocess": id},
     {"name": "Preposition$ebnf$1", "symbols": [], "postprocess": () => null},
-    {"name": "Preposition", "symbols": [(lexer.has("preposition") ? {type: "preposition"} : preposition), "Preposition$ebnf$1"], "postprocess": ([preposition, negated]) => ({ type: "preposition", preposition, negated })},
+    {"name": "Preposition", "symbols": [(lexer.has("word_preposition") ? {type: "word_preposition"} : word_preposition), "Preposition$ebnf$1"], "postprocess": ([preposition, negated]) => ({ type: "preposition", preposition, negated })},
     {"name": "Phrase", "symbols": ["Head", "Modifiers"], "postprocess": ([head, modifiers]) => ({ type: "phrase", head, modifiers })},
     {"name": "Modifiers$ebnf$1", "symbols": []},
     {"name": "Modifiers$ebnf$1", "symbols": ["Modifiers$ebnf$1", "ModifierWord"], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "Modifiers$ebnf$2", "symbols": []},
-    {"name": "Modifiers$ebnf$2", "symbols": ["Modifiers$ebnf$2", "NanpaPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "Modifiers$ebnf$2", "symbols": ["Number"], "postprocess": id},
+    {"name": "Modifiers$ebnf$2", "symbols": [], "postprocess": () => null},
     {"name": "Modifiers$ebnf$3", "symbols": []},
-    {"name": "Modifiers$ebnf$3", "symbols": ["Modifiers$ebnf$3", "PiPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "Modifiers", "symbols": ["Modifiers$ebnf$1", "Modifiers$ebnf$2", "Modifiers$ebnf$3"], "postprocess": idModifiers},
+    {"name": "Modifiers$ebnf$3", "symbols": ["Modifiers$ebnf$3", "NanpaPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "Modifiers$ebnf$4", "symbols": []},
+    {"name": "Modifiers$ebnf$4", "symbols": ["Modifiers$ebnf$4", "PiPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "Modifiers", "symbols": ["Modifiers$ebnf$1", "Modifiers$ebnf$2", "Modifiers$ebnf$3", "Modifiers$ebnf$4"], "postprocess": idModifiers},
     {"name": "ModifiersOneRequired$ebnf$1", "symbols": ["ModifierWord"]},
     {"name": "ModifiersOneRequired$ebnf$1", "symbols": ["ModifiersOneRequired$ebnf$1", "ModifierWord"], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "ModifiersOneRequired$ebnf$2", "symbols": []},
-    {"name": "ModifiersOneRequired$ebnf$2", "symbols": ["ModifiersOneRequired$ebnf$2", "NanpaPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "ModifiersOneRequired$ebnf$2", "symbols": ["Number"], "postprocess": id},
+    {"name": "ModifiersOneRequired$ebnf$2", "symbols": [], "postprocess": () => null},
     {"name": "ModifiersOneRequired$ebnf$3", "symbols": []},
-    {"name": "ModifiersOneRequired$ebnf$3", "symbols": ["ModifiersOneRequired$ebnf$3", "PiPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "ModifiersOneRequired", "symbols": ["ModifiersOneRequired$ebnf$1", "ModifiersOneRequired$ebnf$2", "ModifiersOneRequired$ebnf$3"], "postprocess": idModifiers},
-    {"name": "ModifiersOneRequired$ebnf$4", "symbols": ["NanpaPhrase"]},
-    {"name": "ModifiersOneRequired$ebnf$4", "symbols": ["ModifiersOneRequired$ebnf$4", "NanpaPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "ModifiersOneRequired$ebnf$3", "symbols": ["ModifiersOneRequired$ebnf$3", "NanpaPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "ModifiersOneRequired$ebnf$4", "symbols": []},
+    {"name": "ModifiersOneRequired$ebnf$4", "symbols": ["ModifiersOneRequired$ebnf$4", "PiPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "ModifiersOneRequired", "symbols": ["ModifiersOneRequired$ebnf$1", "ModifiersOneRequired$ebnf$2", "ModifiersOneRequired$ebnf$3", "ModifiersOneRequired$ebnf$4"], "postprocess": idModifiers},
     {"name": "ModifiersOneRequired$ebnf$5", "symbols": []},
-    {"name": "ModifiersOneRequired$ebnf$5", "symbols": ["ModifiersOneRequired$ebnf$5", "PiPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "ModifiersOneRequired", "symbols": ["ModifiersOneRequired$ebnf$4", "ModifiersOneRequired$ebnf$5"], "postprocess": idModifiers},
-    {"name": "ModifiersOneRequired$ebnf$6", "symbols": ["PiPhrase"]},
+    {"name": "ModifiersOneRequired$ebnf$5", "symbols": ["ModifiersOneRequired$ebnf$5", "NanpaPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "ModifiersOneRequired$ebnf$6", "symbols": []},
     {"name": "ModifiersOneRequired$ebnf$6", "symbols": ["ModifiersOneRequired$ebnf$6", "PiPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "ModifiersOneRequired", "symbols": ["ModifiersOneRequired$ebnf$6"], "postprocess": idModifiers},
-    {"name": "NanpaPhrase$ebnf$1", "symbols": [(lexer.has("number") ? {type: "number"} : number)]},
-    {"name": "NanpaPhrase$ebnf$1", "symbols": ["NanpaPhrase$ebnf$1", (lexer.has("number") ? {type: "number"} : number)], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "NanpaPhrase", "symbols": [{"literal":"nanpa"}, "NanpaPhrase$ebnf$1"], "postprocess": ([nanpa, numbers]) => ({ type: "nanpa_phrase", nanpa, numbers })},
+    {"name": "ModifiersOneRequired", "symbols": ["Number", "ModifiersOneRequired$ebnf$5", "ModifiersOneRequired$ebnf$6"], "postprocess": idModifiers},
+    {"name": "ModifiersOneRequired$ebnf$7", "symbols": ["NanpaPhrase"]},
+    {"name": "ModifiersOneRequired$ebnf$7", "symbols": ["ModifiersOneRequired$ebnf$7", "NanpaPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "ModifiersOneRequired$ebnf$8", "symbols": []},
+    {"name": "ModifiersOneRequired$ebnf$8", "symbols": ["ModifiersOneRequired$ebnf$8", "PiPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "ModifiersOneRequired", "symbols": ["ModifiersOneRequired$ebnf$7", "ModifiersOneRequired$ebnf$8"], "postprocess": idModifiers},
+    {"name": "ModifiersOneRequired$ebnf$9", "symbols": ["PiPhrase"]},
+    {"name": "ModifiersOneRequired$ebnf$9", "symbols": ["ModifiersOneRequired$ebnf$9", "PiPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "ModifiersOneRequired", "symbols": ["ModifiersOneRequired$ebnf$9"], "postprocess": idModifiers},
+    {"name": "NanpaPhrase", "symbols": [{"literal":"nanpa"}, "Number"], "postprocess": ([nanpa, number]) => ({ type: "nanpa_phrase", nanpa, number })},
     {"name": "PiPhrase", "symbols": [{"literal":"pi"}, "Head", "ModifiersOneRequired"], "postprocess": ([pi, head, modifiers]) => ({ type: "pi_phrase", pi, head, modifiers })},
-    {"name": "Head", "symbols": [(lexer.has("content") ? {type: "content"} : content)], "postprocess": id},
-    {"name": "Head", "symbols": [(lexer.has("preposition") ? {type: "preposition"} : preposition)], "postprocess": id},
-    {"name": "Head", "symbols": [(lexer.has("preverb") ? {type: "preverb"} : preverb)], "postprocess": id},
-    {"name": "Head", "symbols": [(lexer.has("number") ? {type: "number"} : number)], "postprocess": id},
-    {"name": "Head", "symbols": [(lexer.has("unmarkedSubject") ? {type: "unmarkedSubject"} : unmarkedSubject)], "postprocess": id},
-    {"name": "MarkedSubjectHead", "symbols": [(lexer.has("content") ? {type: "content"} : content)], "postprocess": id},
-    {"name": "MarkedSubjectHead", "symbols": [(lexer.has("preposition") ? {type: "preposition"} : preposition)], "postprocess": id},
-    {"name": "MarkedSubjectHead", "symbols": [(lexer.has("preverb") ? {type: "preverb"} : preverb)], "postprocess": id},
-    {"name": "MarkedSubjectHead", "symbols": [(lexer.has("number") ? {type: "number"} : number)], "postprocess": id},
+    {"name": "Number$ebnf$1", "symbols": [(lexer.has("word_number") ? {type: "word_number"} : word_number)]},
+    {"name": "Number$ebnf$1", "symbols": ["Number$ebnf$1", (lexer.has("word_number") ? {type: "word_number"} : word_number)], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "Number", "symbols": ["Number$ebnf$1"], "postprocess": ([words]) => ({ type: "number", words })},
+    {"name": "Head", "symbols": [(lexer.has("word_content") ? {type: "word_content"} : word_content)], "postprocess": id},
+    {"name": "Head", "symbols": [(lexer.has("word_preposition") ? {type: "word_preposition"} : word_preposition)], "postprocess": id},
+    {"name": "Head", "symbols": [(lexer.has("word_preverb") ? {type: "word_preverb"} : word_preverb)], "postprocess": id},
+    {"name": "Head", "symbols": [(lexer.has("word_number") ? {type: "word_number"} : word_number)], "postprocess": id},
+    {"name": "Head", "symbols": [(lexer.has("word_unmarked_subject") ? {type: "word_unmarked_subject"} : word_unmarked_subject)], "postprocess": id},
+    {"name": "MarkedSubjectHead", "symbols": [(lexer.has("word_content") ? {type: "word_content"} : word_content)], "postprocess": id},
+    {"name": "MarkedSubjectHead", "symbols": [(lexer.has("word_preposition") ? {type: "word_preposition"} : word_preposition)], "postprocess": id},
+    {"name": "MarkedSubjectHead", "symbols": [(lexer.has("word_preverb") ? {type: "word_preverb"} : word_preverb)], "postprocess": id},
+    {"name": "MarkedSubjectHead", "symbols": [(lexer.has("word_number") ? {type: "word_number"} : word_number)], "postprocess": id},
     {"name": "ModifierWord", "symbols": ["Head"], "postprocess": id},
-    {"name": "ModifierWord", "symbols": [(lexer.has("modifierOnly") ? {type: "modifierOnly"} : modifierOnly)], "postprocess": id}
+    {"name": "ModifierWord", "symbols": [(lexer.has("word_modifier_only") ? {type: "word_modifier_only"} : word_modifier_only)], "postprocess": id}
   ],
   ParserStart: "main",
 };

@@ -5,10 +5,29 @@ import { TokiPonaLexer } from "./lex";
 
 const lexer = new TokiPonaLexer();
 
-function idModifiers([modifierWords, nanpaPhrases, piPhrases]: any[]): any {
+function idModifiers(args: any[]): any {
+	// console.log(simple, number, nanpaPhrases, piPhrases);
+	let simple: any;
+	let number: any = null;
+	let nanpaPhrases: any;
+	let piPhrases: any;
+
+	if (args.length === 1) {
+		[piPhrases] = args;
+	} else if (args.length === 2) {
+		[nanpaPhrases, piPhrases] = args;
+	} else if (args.length === 3) {
+		[number, nanpaPhrases, piPhrases] = args;
+	} else if (args.length === 4) {
+		[simple, number, nanpaPhrases, piPhrases] = args;
+	} else {
+		throw new Error("Invalid number of arguments");
+	}
+
 	return {
 		type: "modifiers",
-		modifierWords: modifierWords || [],
+		simple: simple || [],
+		number,
 		nanpaPhrases: nanpaPhrases || [],
 		piPhrases: piPhrases || []
 	};
@@ -68,7 +87,7 @@ DeonticClause -> DeonticSubject:? DeonticPredicates
 	{% ([subjects, predicates]) => ({ type: "clause", kind: "deontic", subjects, predicates, deontic: true }) %}
 
 
-UnmarkedSubject -> %unmarkedSubject
+UnmarkedSubject -> %word_unmarked_subject
 	{% ([head]) => ({ type: "phrase", head }) %}
 
 MarkedSubject -> MarkedSubjectHead {% ([head]) => [{ type: "subject", phrase: { type: "phrase", head } }] %}
@@ -99,7 +118,7 @@ IntransitivePredicate -> Preverb:* Phrase PrepositionPhrase:*
 PrepositionPredicate -> Preverb:* PrepositionPhrase PrepositionPhrase:*
 	{% ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "preposition", preverbs, verb, prepositions }) %}
 
-Preverb -> %preverb "ala":?
+Preverb -> %word_preverb "ala":?
 	{% ([preverb, negated]) => ({ type: "preverb", preverb, negated }) %}
 
 
@@ -110,32 +129,36 @@ Object -> "e" Phrase PrepositionPhrase:*
 PrepositionPhrase -> Preposition Phrase
 	{% ([preposition, phrase]) => ({ type: "preposition_phrase", preposition, phrase }) %}
 
-Preposition -> %preposition "ala":?
+Preposition -> %word_preposition "ala":?
 	{% ([preposition, negated]) => ({ type: "preposition", preposition, negated }) %}
 
 
 Phrase -> Head Modifiers
 	{% ([head, modifiers]) => ({ type: "phrase", head, modifiers }) %}
 
-Modifiers -> ModifierWord:* NanpaPhrase:* PiPhrase:* {% idModifiers %}
+Modifiers -> ModifierWord:* Number:? NanpaPhrase:* PiPhrase:* {% idModifiers %}
 
-ModifiersOneRequired -> ModifierWord:+ NanpaPhrase:* PiPhrase:* {% idModifiers %}
-	| null NanpaPhrase:+ PiPhrase:* {% idModifiers %}
-	| null null PiPhrase:+ {% idModifiers %}
+ModifiersOneRequired -> ModifierWord:+ Number:? NanpaPhrase:* PiPhrase:* {% idModifiers %}
+	| Number NanpaPhrase:* PiPhrase:* {% idModifiers %}
+	| NanpaPhrase:+ PiPhrase:* {% idModifiers %}
+	| PiPhrase:+ {% idModifiers %}
 
-NanpaPhrase -> "nanpa" %number:+
-	{% ([nanpa, numbers]) => ({ type: "nanpa_phrase", nanpa, numbers }) %}
+NanpaPhrase -> "nanpa" Number
+	{% ([nanpa, number]) => ({ type: "nanpa_phrase", nanpa, number }) %}
 PiPhrase -> "pi" Head ModifiersOneRequired
 	{% ([pi, head, modifiers]) => ({ type: "pi_phrase", pi, head, modifiers }) %}
 
-Head -> %content {% id %}
-	| %preposition {% id %}
-	| %preverb {% id %}
-	| %number {% id %}
-	| %unmarkedSubject {% id %}
-MarkedSubjectHead -> %content {% id %}
-	| %preposition {% id %}
-	| %preverb {% id %}
-	| %number {% id %}
+Number -> %word_number:+
+	{% ([words]) => ({ type: "number", words }) %}
+
+Head -> %word_content {% id %}
+	| %word_preposition {% id %}
+	| %word_preverb {% id %}
+	| %word_number {% id %}
+	| %word_unmarked_subject {% id %}
+MarkedSubjectHead -> %word_content {% id %}
+	| %word_preposition {% id %}
+	| %word_preverb {% id %}
+	| %word_number {% id %}
 ModifierWord -> Head {% id %}
-	| %modifierOnly {% id %}
+	| %word_modifier_only {% id %}

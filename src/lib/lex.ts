@@ -1,22 +1,22 @@
 import type { Lexer } from 'nearley';
 
 export type TokenType =
-	| 'particle'
-	| 'content'
-	| 'preposition'
-	| 'preverb'
-	| 'number'
-	| 'modifierOnly' // kin, a, and names
-	| 'unmarkedSubject'; // mi, sina
+	| 'word_particle'
+	| 'word_content'
+	| 'word_preposition'
+	| 'word_preverb'
+	| 'word_number'
+	| 'word_modifier_only' // kin, a, and names
+	| 'word_unmarked_subject'; // mi, sina
 
 export const tokenTypes = [
-	'particle',
-	'content',
-	'preposition',
-	'preverb',
-	'number',
-	'modifierOnly',
-	'unmarkedSubject'
+	'word_particle',
+	'word_content',
+	'word_preposition',
+	'word_preverb',
+	'word_number',
+	'word_modifier_only',
+	'word_unmarked_subject'
 ] as const satisfies TokenType[];
 
 export type Token = {
@@ -63,24 +63,24 @@ export class TokiPonaLexer implements Lexer {
 
 		const value = this.text.substring(index, this.i);
 
-		let type = 'content';
+		let type: TokenType = 'word_content';
 
 		if (particles.includes(value)) {
-			type = 'particle';
+			type = 'word_particle';
 		} else if (prepositions.includes(value)) {
-			type = 'preposition';
+			type = 'word_preposition';
 		} else if (preverbs.includes(value)) {
-			type = 'preverb';
+			type = 'word_preverb';
 		} else if (numbers.includes(value)) {
-			type = 'number';
+			type = 'word_number';
 		} else if (
 			value === 'kin' ||
 			value === 'a' ||
 			value[0] === value[0].toUpperCase()
 		) {
-			type = 'modifierOnly';
+			type = 'word_modifier_only';
 		} else if (unmarkedSubjects.includes(value)) {
-			type = 'unmarkedSubject';
+			type = 'word_unmarked_subject';
 		}
 
 		return { type, value, index };

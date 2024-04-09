@@ -2,10 +2,10 @@
 	import type { Token } from '$lib/lex';
 	import type { Node } from '$lib/types';
 
-	export let node: Node | Node[];
+	export let node: Node;
 
-	function getChildrenInOrder(node: Exclude<Node, Token>): (Node | Node[])[] {
-		const children: (Node | Node[])[] = [];
+	function getChildrenInOrder(node: Exclude<Node, Token>): Node[] {
+		const children: Node[] = [];
 
 		switch (node.type) {
 			case 'phrase':
@@ -13,13 +13,17 @@
 				if (node.modifiers) children.push(node.modifiers);
 				break;
 			case 'modifiers':
-				children.push(...node.modifierWords);
+				children.push(...node.simple);
+				if (node.number) children.push(node.number);
 				children.push(...node.nanpaPhrases);
 				children.push(...node.piPhrases);
 				break;
+			case 'number':
+				children.push(...node.words);
+				break;
 			case 'nanpa_phrase':
 				children.push(node.nanpa);
-				children.push(node.numbers);
+				children.push(node.number);
 				break;
 			case 'pi_phrase':
 				children.push(node.pi);
@@ -28,7 +32,7 @@
 				break;
 			case 'predicate':
 				if (node.marker) children.push(node.marker);
-				children.push(node.preverbs);
+				children.push(...node.preverbs);
 				children.push(node.verb);
 				switch (node.kind) {
 					case 'intransitive':
@@ -63,7 +67,7 @@
 				break;
 			case 'clause':
 				if (node.subjects) children.push(...node.subjects);
-				children.push(node.predicates);
+				children.push(...node.predicates);
 				break;
 			case 'context':
 				switch (node.kind) {
@@ -111,29 +115,19 @@
 	>
 		{node.value}
 	</p>
-{:else if Array.isArray(node) && node.length === 1}
-	<svelte:self node={node[0]} />
-{:else if !Array.isArray(node) || node.length > 1}
+{:else}
 	<div class="-mb-3 p-1 border-2 w-fit bg-white rounded-lg">
-		{#if Array.isArray(node)}
-			<div class="flex items-end justify-center gap-1">
-				{#each node as child}
-					<svelte:self node={child} />
-				{/each}
-			</div>
-		{:else}
-			<p class="text-gray-500 text-xs">
-				{node.type}{#if 'kind' in node}: {node.kind}
-				{/if}
-			</p>
+		<p class="text-gray-500 text-xs">
+			{node.type}{#if 'kind' in node}: {node.kind}
+			{/if}
+		</p>
 
-			<div class="mt-0.5 flex items-end justify-center gap-1">
-				{#each getChildrenInOrder(node) as child}
-					{#if 'index' in child || Array.isArray(child) || getChildrenInOrder(child).length > 0}
-						<svelte:self node={child} />
-					{/if}
-				{/each}
-			</div>
-		{/if}
+		<div class="mt-0.5 flex items-end justify-center gap-1">
+			{#each getChildrenInOrder(node) as child}
+				{#if 'index' in child || Array.isArray(child) || getChildrenInOrder(child).length > 0}
+					<svelte:self node={child} />
+				{/if}
+			{/each}
+		</div>
 	</div>
 {/if}

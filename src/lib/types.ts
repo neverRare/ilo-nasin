@@ -10,15 +10,21 @@ export type Phrase = {
 
 export type Modifiers = {
 	type: 'modifiers';
-	modifierWords: Token[];
+	simple: Token[];
+	number: Number | null;
 	nanpaPhrases: NanpaPhrase[];
 	piPhrases: PiPhrase[];
+};
+
+export type Number = {
+	type: 'number';
+	words: Token[];
 };
 
 export type NanpaPhrase = {
 	type: 'nanpa_phrase';
 	nanpa: Token;
-	numbers: Token[];
+	number: Number;
 };
 
 export type PiPhrase = {
@@ -183,6 +189,7 @@ export type Node =
 	| Token
 	| Phrase
 	| Modifiers
+	| Number
 	| NanpaPhrase
 	| PiPhrase
 	| Predicate
