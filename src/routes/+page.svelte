@@ -53,12 +53,10 @@
 			score += 1;
 		}
 
-		// 'ala' and 'taso' and 'kepeken' are rare as heads
+		// 'ala' and 'taso' are rare as heads
 		if (
 			node.type === 'phrase' &&
-			(node.head.value === 'ala' ||
-				node.head.value === 'taso' ||
-				node.head.value === 'kepeken')
+			(node.head.value === 'ala' || node.head.value === 'taso')
 		) {
 			score -= 2;
 		} else if (node.type === 'number') {
