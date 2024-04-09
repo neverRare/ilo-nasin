@@ -15,7 +15,6 @@ import { TokiPonaLexer } from "./lex";
 const lexer = new TokiPonaLexer();
 
 function idModifiers(args: any[]): any {
-	// console.log(simple, number, nanpaPhrases, piPhrases);
 	let simple: any;
 	let number: any = null;
 	let nanpaPhrases: any;
@@ -40,6 +39,26 @@ function idModifiers(args: any[]): any {
 		nanpaPhrases: nanpaPhrases || [],
 		piPhrases: piPhrases || []
 	};
+}
+
+function verbify(phrase: any): any {
+	if (phrase.type === "phrase") {
+		return {
+			type: "verb",
+			kind: "default",
+			head: phrase.head,
+			modifiers: phrase.modifiers
+		};
+	} else if (phrase.type === "preposition_phrase") {
+		return {
+			type: "verb",
+			kind: "preposition",
+			preposition: phrase.preposition,
+			phrase: phrase.phrase
+		};
+	} else {
+		throw new Error("Invalid phrase type");
+	}
 }
 
 interface NearleyToken {
@@ -138,17 +157,17 @@ const grammar: Grammar = {
     {"name": "TransitivePredicate$ebnf$1", "symbols": ["TransitivePredicate$ebnf$1", "Preverb"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "TransitivePredicate$ebnf$2", "symbols": ["Object"]},
     {"name": "TransitivePredicate$ebnf$2", "symbols": ["TransitivePredicate$ebnf$2", "Object"], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "TransitivePredicate", "symbols": ["TransitivePredicate$ebnf$1", "Phrase", "TransitivePredicate$ebnf$2"], "postprocess": ([preverbs, verb, objects]) => ({ type: "predicate", kind: "transitive", preverbs, verb, objects })},
+    {"name": "TransitivePredicate", "symbols": ["TransitivePredicate$ebnf$1", "Phrase", "TransitivePredicate$ebnf$2"], "postprocess": ([preverbs, verb, objects]) => ({ type: "predicate", kind: "transitive", preverbs, verb: verbify(verb), objects })},
     {"name": "IntransitivePredicate$ebnf$1", "symbols": []},
     {"name": "IntransitivePredicate$ebnf$1", "symbols": ["IntransitivePredicate$ebnf$1", "Preverb"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "IntransitivePredicate$ebnf$2", "symbols": []},
     {"name": "IntransitivePredicate$ebnf$2", "symbols": ["IntransitivePredicate$ebnf$2", "PrepositionPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "IntransitivePredicate", "symbols": ["IntransitivePredicate$ebnf$1", "Phrase", "IntransitivePredicate$ebnf$2"], "postprocess": ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "intransitive", preverbs, verb, prepositions })},
+    {"name": "IntransitivePredicate", "symbols": ["IntransitivePredicate$ebnf$1", "Phrase", "IntransitivePredicate$ebnf$2"], "postprocess": ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "intransitive", preverbs, verb: verbify(verb), prepositions })},
     {"name": "PrepositionPredicate$ebnf$1", "symbols": []},
     {"name": "PrepositionPredicate$ebnf$1", "symbols": ["PrepositionPredicate$ebnf$1", "Preverb"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "PrepositionPredicate$ebnf$2", "symbols": []},
     {"name": "PrepositionPredicate$ebnf$2", "symbols": ["PrepositionPredicate$ebnf$2", "PrepositionPhrase"], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "PrepositionPredicate", "symbols": ["PrepositionPredicate$ebnf$1", "PrepositionPhrase", "PrepositionPredicate$ebnf$2"], "postprocess": ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "preposition", preverbs, verb, prepositions })},
+    {"name": "PrepositionPredicate", "symbols": ["PrepositionPredicate$ebnf$1", "PrepositionPhrase", "PrepositionPredicate$ebnf$2"], "postprocess": ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "preposition", preverbs, verb: verbify(verb), prepositions })},
     {"name": "Preverb$ebnf$1", "symbols": [{"literal":"ala"}], "postprocess": id},
     {"name": "Preverb$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "Preverb", "symbols": [(lexer.has("word_preverb") ? {type: "word_preverb"} : word_preverb), "Preverb$ebnf$1"], "postprocess": ([preverb, negated]) => ({ type: "preverb", preverb, negated })},

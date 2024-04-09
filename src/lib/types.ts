@@ -34,12 +34,17 @@ export type PiPhrase = {
 	modifiers: Modifiers;
 };
 
+export type PolarQuestion = {
+	type: 'polar_question';
+	tokens: [Token, Token];
+};
+
 export type TransitivePredicate = {
 	type: 'predicate';
 	kind: 'transitive';
 	marker?: Token;
 	preverbs: Preverb[];
-	verb: Phrase;
+	verb: SimpleVerb;
 	objects: Object[];
 };
 
@@ -48,7 +53,7 @@ export type IntransitivePredicate = {
 	kind: 'intransitive';
 	marker?: Token;
 	preverbs: Preverb[];
-	verb: Phrase;
+	verb: SimpleVerb;
 	prepositions: PrepositionPhrase[];
 };
 
@@ -57,7 +62,7 @@ export type PrepositionPredicate = {
 	kind: 'preposition';
 	marker?: Token;
 	preverbs: Preverb[];
-	verb: PrepositionPhrase;
+	verb: PrepositionVerb;
 	prepositions: PrepositionPhrase[];
 };
 
@@ -70,6 +75,23 @@ export type Preverb = {
 	type: 'preverb';
 	preverb: Token;
 	negated: Token | null;
+	polarQuestion?: PolarQuestion;
+};
+
+export type SimpleVerb = {
+	type: 'verb';
+	kind: 'default';
+	head: Token;
+	polarQuestion?: PolarQuestion;
+	modifiers: Modifiers;
+};
+
+export type PrepositionVerb = {
+	type: 'verb';
+	kind: 'preposition';
+	preposition: Preposition;
+	polarQuestion?: PolarQuestion;
+	phrase: Phrase;
 };
 
 export type Object = {
@@ -192,8 +214,11 @@ export type Node =
 	| Number
 	| NanpaPhrase
 	| PiPhrase
+	| PolarQuestion
 	| Predicate
 	| Preverb
+	| SimpleVerb
+	| PrepositionVerb
 	| Object
 	| PrepositionPhrase
 	| Preposition

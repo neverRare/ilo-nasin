@@ -31,6 +31,26 @@ function idModifiers(args: any[]): any {
 		piPhrases: piPhrases || []
 	};
 }
+
+function verbify(phrase: any): any {
+	if (phrase.type === "phrase") {
+		return {
+			type: "verb",
+			kind: "default",
+			head: phrase.head,
+			modifiers: phrase.modifiers
+		};
+	} else if (phrase.type === "preposition_phrase") {
+		return {
+			type: "verb",
+			kind: "preposition",
+			preposition: phrase.preposition,
+			phrase: phrase.phrase
+		};
+	} else {
+		throw new Error("Invalid phrase type");
+	}
+}
 %}
 
 @lexer lexer
@@ -109,13 +129,13 @@ Predicate -> TransitivePredicate {% id %}
 	| PrepositionPredicate {% id %}
 
 TransitivePredicate -> Preverb:* Phrase Object:+
-	{% ([preverbs, verb, objects]) => ({ type: "predicate", kind: "transitive", preverbs, verb, objects }) %}
+	{% ([preverbs, verb, objects]) => ({ type: "predicate", kind: "transitive", preverbs, verb: verbify(verb), objects }) %}
 
 IntransitivePredicate -> Preverb:* Phrase PrepositionPhrase:*
-	{% ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "intransitive", preverbs, verb, prepositions }) %}
+	{% ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "intransitive", preverbs, verb: verbify(verb), prepositions }) %}
 
 PrepositionPredicate -> Preverb:* PrepositionPhrase PrepositionPhrase:*
-	{% ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "preposition", preverbs, verb, prepositions }) %}
+	{% ([preverbs, verb, prepositions]) => ({ type: "predicate", kind: "preposition", preverbs, verb: verbify(verb), prepositions }) %}
 
 Preverb -> %word_preverb "ala":?
 	{% ([preverb, negated]) => ({ type: "preverb", preverb, negated }) %}

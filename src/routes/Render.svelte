@@ -30,6 +30,9 @@
 				children.push(node.head);
 				children.push(node.modifiers);
 				break;
+			case 'polar_question':
+				children.push(...node.tokens);
+				break;
 			case 'predicate':
 				if (node.marker) children.push(node.marker);
 				children.push(...node.preverbs);
@@ -46,7 +49,24 @@
 				break;
 			case 'preverb':
 				children.push(node.preverb);
-				if (node.negated) children.push(node.negated);
+				if (node.polarQuestion) children.push(node.polarQuestion);
+				else if (node.negated) children.push(node.negated);
+				break;
+			case 'verb':
+				switch (node.kind) {
+					case 'default':
+						children.push(node.head);
+						if (node.polarQuestion)
+							children.push(node.polarQuestion);
+						children.push(node.modifiers);
+						break;
+					case 'preposition':
+						children.push(node.preposition);
+						if (node.polarQuestion)
+							children.push(node.polarQuestion);
+						children.push(node.phrase);
+						break;
+				}
 				break;
 			case 'object':
 				children.push(node.e);
@@ -121,7 +141,7 @@
 			class="relative top-3 -mt-3 p-1 border-2 w-fit bg-white rounded-lg"
 		>
 			<p class="text-gray-500 text-xs">
-				{node.type}{#if 'kind' in node}: {node.kind}
+				{node.type}{#if 'kind' in node && node.kind !== 'default'}: {node.kind}
 				{/if}
 			</p>
 
