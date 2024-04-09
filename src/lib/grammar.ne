@@ -6,7 +6,6 @@ import { TokiPonaLexer } from "./lex";
 const lexer = new TokiPonaLexer();
 
 function idModifiers(args: any[]): any {
-	// console.log(simple, number, nanpaPhrases, piPhrases);
 	let simple: any;
 	let number: any = null;
 	let nanpaPhrases: any;
