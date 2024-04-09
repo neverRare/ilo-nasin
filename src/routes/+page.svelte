@@ -63,6 +63,15 @@
 			score -= 2;
 		} else if (node.type === 'number') {
 			score += node.words.length / 2;
+
+			// 'luka' 'mute' and 'ale' are typically not used as numbers on their own
+			if (
+				node.words.length === 1 &&
+				node.words[0].value !== 'wan' &&
+				node.words[0].value !== 'tu'
+			) {
+				score -= 1;
+			}
 		}
 
 		for (const child of children) {
