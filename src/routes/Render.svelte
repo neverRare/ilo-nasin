@@ -107,29 +107,27 @@
 
 {#if 'index' in node}
 	<p
-		class="-mb-4 px-2 py-1 rounded-lg border-2 border-green-100 bg-green-100"
+		class="-mb-4 px-1 py-0.5 text-sm rounded-lg border-2 border-green-300 bg-green-50"
 	>
 		{node.value}
 	</p>
 {:else if Array.isArray(node) && node.length === 1}
 	<svelte:self node={node[0]} />
 {:else if !Array.isArray(node) || node.length > 1}
-	<div class="-mb-4 p-2 border-2 w-fit bg-white rounded-lg">
+	<div class="-mb-3 p-1 border-2 w-fit bg-white rounded-lg">
 		{#if Array.isArray(node)}
-			<div class="flex items-start justify-center gap-1">
+			<div class="flex items-end justify-center gap-1">
 				{#each node as child}
 					<svelte:self node={child} />
 				{/each}
 			</div>
 		{:else}
 			<p class="text-gray-500 text-xs">
-				{node.type}
-				{#if 'kind' in node}
-					({node.kind})
+				{node.type}{#if 'kind' in node}: {node.kind}
 				{/if}
 			</p>
 
-			<div class="mt-1 flex items-start justify-center gap-1">
+			<div class="mt-0.5 flex items-end justify-center gap-1">
 				{#each getChildrenInOrder(node) as child}
 					{#if 'index' in child || Array.isArray(child) || getChildrenInOrder(child).length > 0}
 						<svelte:self node={child} />

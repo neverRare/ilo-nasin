@@ -20,7 +20,7 @@ export const tokenTypes = [
 ] as const satisfies TokenType[];
 
 export type Token = {
-	type: string;
+	type: TokenType;
 	value: string;
 	index: number;
 };
