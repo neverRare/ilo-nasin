@@ -29,7 +29,6 @@
 
 	const goodNodes: Node['type'][] = [
 		'nanpa_phrase',
-		'pi_phrase',
 		'preverb',
 		'preposition_phrase',
 		'clause',
@@ -39,7 +38,7 @@
 	function scoreNode(node: Node): number {
 		let score = 0;
 
-		if (node.type === 'token') {
+		if ('index' in node) {
 			return score;
 		}
 
@@ -57,7 +56,6 @@
 		// 'ala' and 'taso' and 'kepeken' are rare as heads
 		if (
 			node.type === 'phrase' &&
-			!('index' in node) &&
 			(node.head.value === 'ala' ||
 				node.head.value === 'taso' ||
 				node.head.value === 'kepeken')
