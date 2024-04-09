@@ -19,7 +19,7 @@
 				children.push(...node.piPhrases);
 				break;
 			case 'number':
-				children.push(...node.words);
+				children.push(...node.tokens);
 				break;
 			case 'nanpa_phrase':
 				children.push(node.nanpa);
@@ -109,25 +109,29 @@
 	}
 </script>
 
-{#if 'index' in node}
-	<p
-		class="-mb-4 px-1 py-0.5 text-sm rounded-lg border-2 border-green-300 bg-green-50"
-	>
-		{node.value}
-	</p>
-{:else}
-	<div class="-mb-3 p-1 border-2 w-fit bg-white rounded-lg">
-		<p class="text-gray-500 text-xs">
-			{node.type}{#if 'kind' in node}: {node.kind}
-			{/if}
+<div class="relative">
+	{#if 'index' in node}
+		<p
+			class="relative top-3 -mt-3 px-1 py-0.5 text-sm rounded-lg border-2 border-green-300 bg-green-50"
+		>
+			{node.value}
 		</p>
-
-		<div class="mt-0.5 flex items-end justify-center gap-1">
-			{#each getChildrenInOrder(node) as child}
-				{#if 'index' in child || Array.isArray(child) || getChildrenInOrder(child).length > 0}
-					<svelte:self node={child} />
+	{:else}
+		<div
+			class="relative top-3 -mt-3 p-1 border-2 w-fit bg-white rounded-lg"
+		>
+			<p class="text-gray-500 text-xs">
+				{node.type}{#if 'kind' in node}: {node.kind}
 				{/if}
-			{/each}
+			</p>
+
+			<div class="mt-0.5 flex items-end justify-center gap-1">
+				{#each getChildrenInOrder(node) as child}
+					{#if 'index' in child || getChildrenInOrder(child).length > 0}
+						<svelte:self node={child} />
+					{/if}
+				{/each}
+			</div>
 		</div>
-	</div>
-{/if}
+	{/if}
+</div>

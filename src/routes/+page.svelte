@@ -1,11 +1,6 @@
 <script lang="ts">
-	import nearley from 'nearley';
-
-	import grammar from '$lib/grammar';
-	import type { Node, Result } from '$lib/types';
 	import Render from './Render.svelte';
-
-	type ScoredResult = { result: Result; score: number };
+	import { parse, type ScoredResult } from '$lib/parser';
 
 	let text = 'sina ken ala toki pona e ijo la, sina sona ala e ijo.';
 	let results: ScoredResult[];
@@ -14,13 +9,8 @@
 	let limited = true;
 
 	$: if (text) {
-		const parser = new nearley.Parser(
-			nearley.Grammar.fromCompiled(grammar)
-		);
-
 		try {
-			parser.feed(text);
-			results = sortResults(parser.results);
+			results = parse(text);
 			error = null;
 		} catch (e) {
 			console.error(e);
@@ -28,78 +18,10 @@
 			error = e as Error;
 		}
 	}
-
-	const goodNodes: Node['type'][] = [
-		'nanpa_phrase',
-		'preverb',
-		'preposition_phrase',
-		'clause',
-		'sentence'
-	];
-
-	function scoreNode(node: Node): number {
-		let score = 0;
-
-		if ('index' in node) {
-			return score;
-		}
-
-		const children = Object.values(node)
-			.filter(value => value && typeof value === 'object')
-			.flat()
-			.filter(value => value && 'type' in value);
-
-		if (goodNodes.includes(node.type)) {
-			score += 1;
-		}
-
-		// 'ala' and 'taso' are rare as heads
-		if (
-			node.type === 'phrase' &&
-			(node.head.value === 'ala' || node.head.value === 'taso')
-		) {
-			score -= 2;
-		} else if (node.type === 'number') {
-			score += node.words.length / 2;
-
-			// 'luka' 'mute' and 'ale' are typically not used as numbers on their own
-			if (
-				node.words.length === 1 &&
-				node.words[0].value !== 'wan' &&
-				node.words[0].value !== 'tu'
-			) {
-				score -= 1;
-			}
-		}
-
-		for (const child of children) {
-			score += scoreNode(child);
-		}
-
-		return score;
-	}
-
-	function sortResults(results: Result[]): ScoredResult[] {
-		const scoredResults = results
-			.map(result => ({
-				score: scoreNode(result),
-				result
-			}))
-			.sort((a, b) => b.score - a.score);
-
-		const exps = scoredResults.map(sr => Math.exp(sr.score));
-		const sum = exps.reduce((a, b) => a + b, 0);
-
-		for (let i = 0; i < scoredResults.length; i++) {
-			scoredResults[i].score = exps[i] / sum;
-		}
-
-		return scoredResults;
-	}
 </script>
 
-<div class="px-8 mb-20">
-	<h1 class="text-3xl font-bold mt-20">ilo nasin</h1>
+<div class="px-8 my-20">
+	<h1 class="text-3xl font-bold">ilo nasin</h1>
 
 	<input
 		type="text"

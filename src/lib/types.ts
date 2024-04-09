@@ -18,7 +18,7 @@ export type Modifiers = {
 
 export type Number = {
 	type: 'number';
-	words: Token[];
+	tokens: Token[];
 };
 
 export type NanpaPhrase = {
