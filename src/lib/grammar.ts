@@ -214,7 +214,7 @@ const grammar: Grammar = {
     {"name": "PiPhrase", "symbols": [{"literal":"pi"}, "Head", "ModifiersOneRequired"], "postprocess": ([pi, head, modifiers]) => ({ type: "pi_phrase", pi, head, modifiers })},
     {"name": "Number$ebnf$1", "symbols": [(lexer.has("word_number") ? {type: "word_number"} : word_number)]},
     {"name": "Number$ebnf$1", "symbols": ["Number$ebnf$1", (lexer.has("word_number") ? {type: "word_number"} : word_number)], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "Number", "symbols": ["Number$ebnf$1"], "postprocess": ([words]) => ({ type: "number", words })},
+    {"name": "Number", "symbols": ["Number$ebnf$1"], "postprocess": ([tokens]) => ({ type: "number", tokens })},
     {"name": "Head", "symbols": [(lexer.has("word_content") ? {type: "word_content"} : word_content)], "postprocess": id},
     {"name": "Head", "symbols": [(lexer.has("word_preposition") ? {type: "word_preposition"} : word_preposition)], "postprocess": id},
     {"name": "Head", "symbols": [(lexer.has("word_preverb") ? {type: "word_preverb"} : word_preverb)], "postprocess": id},

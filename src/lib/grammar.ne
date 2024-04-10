@@ -168,7 +168,7 @@ PiPhrase -> "pi" Head ModifiersOneRequired
 	{% ([pi, head, modifiers]) => ({ type: "pi_phrase", pi, head, modifiers }) %}
 
 Number -> %word_number:+
-	{% ([words]) => ({ type: "number", words }) %}
+	{% ([tokens]) => ({ type: "number", tokens }) %}
 
 Head -> %word_content {% id %}
 	| %word_preposition {% id %}
