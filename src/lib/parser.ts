@@ -199,10 +199,11 @@ function scoreNode(node: Node): number {
 
 	// 'ala' and 'taso' are rare as heads
 	if (
-		node.type === 'phrase' &&
+		(node.type === 'phrase' ||
+			(node.type === 'verb' && node.kind === 'default')) &&
 		(node.head.value === 'ala' || node.head.value === 'taso')
 	) {
-		score -= 1;
+		score -= 1.5;
 	} else if (node.type === 'number') {
 		score += node.tokens.length / 2;
 
