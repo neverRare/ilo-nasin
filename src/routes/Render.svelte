@@ -82,7 +82,7 @@
 				if (node.negated) children.push(node.negated);
 				break;
 			case 'subject':
-				if (node.en) children.push(node.en);
+				if (node.marker) children.push(node.marker);
 				children.push(node.phrase);
 				break;
 			case 'clause':
@@ -98,7 +98,7 @@
 						children.push(...node.phrases);
 						break;
 					case 'phrase':
-						children.push(node.phrase);
+						children.push(...node.subjects);
 						break;
 					case 'clause':
 						children.push(node.clause);
@@ -113,15 +113,16 @@
 				if (node.conjunction) children.push(node.conjunction);
 				children.push(...node.contexts);
 				children.push(node.clause);
+				if (node.kin) children.push(node.kin);
 				if (node.questionTag) children.push(node.questionTag);
 				if (node.emphasis) children.push(node.emphasis);
 				break;
 			case 'vocative':
-				children.push(node.phrase);
+				children.push(...node.subjects);
 				children.push(node.o);
 				break;
 			case 'interjection':
-				children.push(node.phrase);
+				children.push(...node.subjects);
 				break;
 		}
 

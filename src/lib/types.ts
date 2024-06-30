@@ -115,7 +115,7 @@ export type Preposition = {
 
 export type Subject = {
 	type: 'subject';
-	en?: Token;
+	marker?: Token;
 	phrase: Phrase;
 };
 
@@ -158,7 +158,7 @@ export type ContextPreposition = {
 export type ContextPhrase = {
 	type: 'context';
 	kind: 'phrase';
-	phrase: Phrase;
+	subjects: Subject[];
 	la: Token;
 };
 
@@ -190,18 +190,19 @@ export type Sentence = {
 	conjunction?: Token;
 	contexts: Context[];
 	clause: Clause;
+	kin?: Token;
 	questionTag?: QuestionTag;
 	emphasis?: Token;
 };
 
 export type Interjection = {
 	type: 'interjection';
-	phrase: Phrase;
+	subjects: Subject[];
 };
 
 export type Vocative = {
 	type: 'vocative';
-	phrase: Phrase;
+	subjects: Subject[];
 	o: Token;
 };
 

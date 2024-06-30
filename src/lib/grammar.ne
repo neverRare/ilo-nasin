@@ -59,13 +59,13 @@ main -> Sentence {% id %}
 	| Interjection {% id %}
 	| Vocative {% id %}
 
-Interjection -> Phrase
-	{% ([phrase]) => ({ type: "interjection", phrase }) %}
-Vocative -> Phrase "o"
-	{% ([phrase, o]) => ({ type: "vocative", phrase, o}) %}
+Interjection -> GeneralSubject
+	{% ([subjects]) => ({ type: "interjection", subjects }) %}
+Vocative -> GeneralSubject "o"
+	{% ([subjects, o]) => ({ type: "vocative", subjects, o}) %}
 
-Sentence -> "taso":? Context:* Clause QuestionTag:? "a":?
-	{% ([conjunction, contexts, clause, questionTag, emphasis]) => ({ type: "sentence", conjunction, contexts, clause, questionTag, emphasis }) %}
+Sentence -> "taso":? Context:* Clause "kin":? QuestionTag:? "a":?
+	{% ([conjunction, contexts, clause, kin, questionTag, emphasis]) => ({ type: "sentence", conjunction, contexts, clause, kin, questionTag, emphasis }) %}
 
 Context -> ContextConjunction {% id %}
 	| ContextPreposition {% id %}
@@ -78,8 +78,8 @@ ContextConjunction -> "kin" "la":?
 ContextPreposition -> PrepositionPhrase:+ "la"
 	{% ([phrases, la]) => ({ type: "context", kind: "preposition", phrases, la }) %}
 
-ContextPhrase -> Phrase "la"
-	{% ([phrase, la]) => ({ type: "context", kind: "phrase", phrase, la }) %}
+ContextPhrase -> GeneralSubject "la"
+	{% ([subjects, la]) => ({ type: "context", kind: "phrase", subjects, la }) %}
 
 ContextClause -> Clause "la"
 	{% ([clause, la]) => ({ type: "context", kind: "clause", clause, la }) %}
@@ -102,7 +102,7 @@ MarkedSubjectClause -> MarkedSubject "li" Predicates
 		predicates: [{ marker: li, ...predicates[0] }, ...predicates.slice(1)]
 	}) %}
 
-DeonticClause -> DeonticSubject:? DeonticPredicates
+DeonticClause -> GeneralSubject:? DeonticPredicates
 	{% ([subjects, predicates]) => ({ type: "clause", kind: "deontic", subjects, predicates, deontic: true }) %}
 
 
@@ -111,14 +111,18 @@ UnmarkedSubject -> %word_unmarked_subject
 
 MarkedSubject -> MarkedSubjectHead {% ([head]) => [{ type: "subject", phrase: { type: "phrase", head } }] %}
 	| Head ModifiersOneRequired {% ([head, modifiers]) => [{ type: "subject", phrase: { type: "phrase", head, modifiers } }] %}
-	| Phrase ( "en" Phrase {% ([en, subject]) => ({ type: "subject", en, phrase: subject }) %} ):+
+	| Phrase ( "en" Phrase {% ([marker, subject]) => ({ type: "subject", marker, phrase: subject }) %} ):+
+	{% ([subject, subjects]) => [{ type: "subject", phrase: subject }, ...subjects] %}
+	| Phrase ( "anu" Phrase {% ([marker, subject]) => ({ type: "subject", marker, phrase: subject }) %} ):+
 	{% ([subject, subjects]) => [{ type: "subject", phrase: subject }, ...subjects] %}
 
-DeonticSubject -> UnmarkedSubject {% ([subject]) => [{ type: "subject", phrase: subject }] %}
+GeneralSubject -> UnmarkedSubject {% ([subject]) => [{ type: "subject", phrase: subject }] %}
 	| MarkedSubject {% id %}
 
 
 Predicates -> Predicate ( "li" Predicate {% ([li, predicate]) => ({ marker: li, ...predicate }) %} ):*
+	{% ([predicate, predicates]) => [predicate, ...predicates] %}
+	| Predicate ( "anu" Predicate {% ([li, predicate]) => ({ marker: li, ...predicate }) %} ):*
 	{% ([predicate, predicates]) => [predicate, ...predicates] %}
 
 DeonticPredicates -> ("o" Predicate {% ([o, predicate]) => ({ marker: o, ...predicate }) %} ):+
