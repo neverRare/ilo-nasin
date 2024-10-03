@@ -111,10 +111,11 @@ UnmarkedSubject -> %word_unmarked_subject
 
 MarkedSubject -> MarkedSubjectHead {% ([head]) => [{ type: "subject", phrase: { type: "phrase", head } }] %}
 	| Head ModifiersOneRequired {% ([head, modifiers]) => [{ type: "subject", phrase: { type: "phrase", head, modifiers } }] %}
-	| Phrase ( "en" Phrase {% ([marker, subject]) => ({ type: "subject", marker, phrase: subject }) %} ):+
+	| Phrase ( SubjectMarker Phrase {% ([marker, subject]) => ({ type: "subject", marker, phrase: subject }) %} ):+
 	{% ([subject, subjects]) => [{ type: "subject", phrase: subject }, ...subjects] %}
-	| Phrase ( "anu" Phrase {% ([marker, subject]) => ({ type: "subject", marker, phrase: subject }) %} ):+
-	{% ([subject, subjects]) => [{ type: "subject", phrase: subject }, ...subjects] %}
+
+SubjectMarker -> "en" {% id %}
+	| "anu" {% id %}
 
 GeneralSubject -> UnmarkedSubject {% ([subject]) => [{ type: "subject", phrase: subject }] %}
 	| MarkedSubject {% id %}
@@ -122,8 +123,9 @@ GeneralSubject -> UnmarkedSubject {% ([subject]) => [{ type: "subject", phrase: 
 
 Predicates -> Predicate ( "li" Predicate {% ([li, predicate]) => ({ marker: li, ...predicate }) %} ):*
 	{% ([predicate, predicates]) => [predicate, ...predicates] %}
-	| Predicate ( "anu" Predicate {% ([li, predicate]) => ({ marker: li, ...predicate }) %} ):*
-	{% ([predicate, predicates]) => [predicate, ...predicates] %}
+
+PredicateMarker -> "li" {% id %}
+	| "anu" {% id %}
 
 DeonticPredicates -> ("o" Predicate {% ([o, predicate]) => ({ marker: o, ...predicate }) %} ):+
 	{% id %}
