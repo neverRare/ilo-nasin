@@ -11,12 +11,12 @@ export type Phrase = {
 export type Modifiers = {
 	type: 'modifiers';
 	simple: Token[];
-	number: Number | null;
+	number: NumberPhrase | null;
 	nanpaPhrases: NanpaPhrase[];
 	piPhrases: PiPhrase[];
 };
 
-export type Number = {
+export type NumberPhrase = {
 	type: 'number';
 	tokens: Token[];
 };
@@ -24,7 +24,7 @@ export type Number = {
 export type NanpaPhrase = {
 	type: 'nanpa_phrase';
 	nanpa: Token;
-	number: Number;
+	number: NumberPhrase;
 };
 
 export type PiPhrase = {
@@ -45,7 +45,7 @@ export type TransitivePredicate = {
 	marker?: Token;
 	preverbs: Preverb[];
 	verb: SimpleVerb;
-	objects: Object[];
+	objects: ObjectPhrase[];
 };
 
 export type IntransitivePredicate = {
@@ -94,9 +94,9 @@ export type PrepositionVerb = {
 	phrase: Phrase;
 };
 
-export type Object = {
+export type ObjectPhrase = {
 	type: 'object';
-	e: Token;
+	marker: Token;
 	object: Phrase;
 	prepositions: PrepositionPhrase[];
 };
@@ -212,7 +212,7 @@ export type Node =
 	| Token
 	| Phrase
 	| Modifiers
-	| Number
+	| NumberPhrase
 	| NanpaPhrase
 	| PiPhrase
 	| PolarQuestion
@@ -220,7 +220,7 @@ export type Node =
 	| Preverb
 	| SimpleVerb
 	| PrepositionVerb
-	| Object
+	| ObjectPhrase
 	| PrepositionPhrase
 	| Preposition
 	| Subject

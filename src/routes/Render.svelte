@@ -69,7 +69,7 @@
 				}
 				break;
 			case 'object':
-				children.push(node.e);
+				children.push(node.marker);
 				children.push(node.object);
 				children.push(...node.prepositions);
 				break;

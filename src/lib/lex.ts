@@ -43,7 +43,7 @@ export class TokiPonaLexer implements Lexer {
 	private i = 0;
 	private text = '';
 
-	reset(text: string, _info: unknown) {
+	reset(text: string) {
 		this.i = 0;
 		this.text = text;
 	}

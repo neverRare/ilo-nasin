@@ -121,7 +121,7 @@ GeneralSubject -> UnmarkedSubject {% ([subject]) => [{ type: "subject", phrase: 
 	| MarkedSubject {% id %}
 
 
-Predicates -> Predicate ( "li" Predicate {% ([li, predicate]) => ({ marker: li, ...predicate }) %} ):*
+Predicates -> Predicate ( PredicateMarker Predicate {% ([li, predicate]) => ({ marker: li, ...predicate }) %} ):*
 	{% ([predicate, predicates]) => [predicate, ...predicates] %}
 
 PredicateMarker -> "li" {% id %}
@@ -134,7 +134,7 @@ Predicate -> TransitivePredicate {% id %}
 	| IntransitivePredicate {% id %}
 	| PrepositionPredicate {% id %}
 
-TransitivePredicate -> Preverb:* Phrase Object:+
+TransitivePredicate -> Preverb:* Phrase ObjectPhrases
 	{% ([preverbs, verb, objects]) => ({ type: "predicate", kind: "transitive", preverbs, verb: verbify(verb), objects }) %}
 
 IntransitivePredicate -> Preverb:* Phrase PrepositionPhrase:*
@@ -147,8 +147,14 @@ Preverb -> %word_preverb "ala":?
 	{% ([preverb, negated]) => ({ type: "preverb", preverb, negated }) %}
 
 
-Object -> "e" Phrase PrepositionPhrase:*
-	{% ([e, object, prepositions]) => ({ type: "object", e, object, prepositions }) %}
+ObjectPhrases -> "e" ObjectPhrase ( ObjectMarker ObjectPhrase {% ([marker, object]) => ({ marker, ...object }) %} ):*
+	{% ([e, object, objects]) => [{ marker: e, ...object }, ...objects] %}
+
+ObjectMarker -> "e" {% id %}
+	| "anu" {% id %}
+
+ObjectPhrase -> Phrase PrepositionPhrase:* {% ([object, prepositions]) => ({ type: "object", object, prepositions }) %}
+
 
 
 PrepositionPhrase -> Preposition Phrase
@@ -161,19 +167,19 @@ Preposition -> %word_preposition "ala":?
 Phrase -> Head Modifiers
 	{% ([head, modifiers]) => ({ type: "phrase", head, modifiers }) %}
 
-Modifiers -> ModifierWord:* Number:? NanpaPhrase:* PiPhrase:* {% idModifiers %}
+Modifiers -> ModifierWord:* NumberPhrase:? NanpaPhrase:* PiPhrase:* {% idModifiers %}
 
-ModifiersOneRequired -> ModifierWord:+ Number:? NanpaPhrase:* PiPhrase:* {% idModifiers %}
-	| Number NanpaPhrase:* PiPhrase:* {% idModifiers %}
+ModifiersOneRequired -> ModifierWord:+ NumberPhrase:? NanpaPhrase:* PiPhrase:* {% idModifiers %}
+	| NumberPhrase NanpaPhrase:* PiPhrase:* {% idModifiers %}
 	| NanpaPhrase:+ PiPhrase:* {% idModifiers %}
 	| PiPhrase:+ {% idModifiers %}
 
-NanpaPhrase -> "nanpa" Number
+NanpaPhrase -> "nanpa" NumberPhrase
 	{% ([nanpa, number]) => ({ type: "nanpa_phrase", nanpa, number }) %}
 PiPhrase -> "pi" Head ModifiersOneRequired
 	{% ([pi, head, modifiers]) => ({ type: "pi_phrase", pi, head, modifiers }) %}
 
-Number -> %word_number:+
+NumberPhrase -> %word_number:+
 	{% ([tokens]) => ({ type: "number", tokens }) %}
 
 Head -> %word_content {% id %}
